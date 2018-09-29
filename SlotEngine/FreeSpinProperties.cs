@@ -10,6 +10,7 @@ namespace GameEngine
         private int m_iFreeSpinsTotal;
         private int m_iCurrentFreeSpin;
         private int m_iWinAmount;
+        protected List<List<int>> m_FSReelStops;
 
         public FreeSpinProperties()
         {

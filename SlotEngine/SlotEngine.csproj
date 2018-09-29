@@ -7,8 +7,8 @@
     <ProjectGuid>{68061045-BB9F-4C94-90DA-E6EB485EECC9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SlotGame</RootNamespace>
-    <AssemblyName>SlotGame</AssemblyName>
+    <RootNamespace>SlotEngine</RootNamespace>
+    <AssemblyName>SlotEngine</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>

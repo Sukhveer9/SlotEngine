@@ -9,7 +9,7 @@ namespace GameEngine
         private int m_iWinAmount;
         private int m_iBaseWinAmount;
         private List<WinLine> m_WinLines;
-        private List<int> m_ReelStops;
+        private int[] m_ReelStops;
         private bool m_bHaveBonus;
         private bool m_bHasSlotFeature;
         private bool m_bFreePlay;
@@ -23,7 +23,7 @@ namespace GameEngine
         private List<SlotReel.ScatterSymbol> m_ScatterWins;
 
         private List<List<int>> m_FSReelStops;
-        private List<int> m_BaseReelStops;
+        private int[] m_BaseReelStops;
 
         private SlotFeatureResult m_SlotFeatureResult;
         private List<SlotFeatureResult> m_SlotFeatureResultList;
@@ -33,7 +33,6 @@ namespace GameEngine
         public SpinResult()
         {
             m_WinLines = new List<WinLine>();
-            m_ReelStops = new List<int>();
             m_TriggerLines = new List<SlotReel.TriggerSymbol>();
             m_ScatterWins = new List<SlotReel.ScatterSymbol>();
             m_SlotFeatureResultList = new List<SlotFeatureResult>();
@@ -64,7 +63,7 @@ namespace GameEngine
         }
 
 #if _SIMULATOR
-        public List<int> BaseReelStops
+        public int[] BaseReelStops
         {
             get { return m_BaseReelStops; }
         }
@@ -86,7 +85,17 @@ namespace GameEngine
             //m_iBaseWinAmount = iWinAmount;
 
             m_WinLines = winLines;
-            m_ReelStops = reelstops;
+
+            if(m_ReelStops == null || m_ReelStops.Length != reelstops.Count)
+            {
+                m_ReelStops = new int[reelstops.Count];
+            }
+
+            for(int i = 0; i < reelstops.Count; i++)
+            {
+                m_ReelStops[i] = reelstops[i];
+            }
+            //m_ReelStops = reelstops;
         }
 
         public void setResult(int iWinAmount, List<WayPayWin> wayPayWins, List<int> reelstops)
@@ -97,7 +106,15 @@ namespace GameEngine
             //m_iBaseWinAmount = iWinAmount;
 
             m_WayPayWins = wayPayWins;
-            m_ReelStops = reelstops;
+            if (m_ReelStops == null || m_ReelStops.Length != reelstops.Count)
+            {
+                m_ReelStops = new int[reelstops.Count];
+            }
+
+            for (int i = 0; i < reelstops.Count; i++)
+            {
+                m_ReelStops[i] = reelstops[i];
+            }
         }
 
         public void AddTriggerLine(SlotReel.TriggerSymbol triggerLine)
@@ -127,7 +144,15 @@ namespace GameEngine
 
         public void AddBaseGameWin(List<int> baseReelStops)
         {
-            m_BaseReelStops = baseReelStops;
+            if(m_BaseReelStops == null || m_BaseReelStops.Length != baseReelStops.Count)
+            {
+                m_BaseReelStops = new int[baseReelStops.Count];
+            }
+            for(int i = 0; i < baseReelStops.Count; i++)
+            {
+                m_BaseReelStops[i] = baseReelStops[i];
+            }
+            //m_BaseReelStops = baseReelStops;
         }
 
         public void AddFSReelStops(List<List<int>> FSReelStops)
@@ -205,7 +230,7 @@ namespace GameEngine
             return m_ScatterWins;
         }
 
-        public List<int> getReelStops()
+        public int[] getReelStops()
         {
             return m_ReelStops;
         }
