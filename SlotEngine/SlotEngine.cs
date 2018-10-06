@@ -32,13 +32,15 @@ namespace GameEngine
         protected Bonus m_CurrentBonusGame;
         protected SlotFeature m_CurrentSlotFeature;
         protected XmlDocument m_xmlDocument;
-        protected SlotReel m_BaseSlot;
-        protected SlotReel m_FreespinSlot;
+        //protected SlotReel m_BaseSlot;
+        //protected SlotReel m_FreespinSlot;
+        protected SlotReel m_CurrentSlotReel;
+        protected Dictionary<int,SlotReel> m_SlotReels;
         protected int m_iTotalWinAmount;
 
         protected SpinResult m_SpinResult;
         protected List<Bonus> m_BonusList;
-        protected List<SlotFeature> m_SlotFeatures;
+        //protected List<SlotFeature> m_SlotFeatures;
         //protected List<List<int>> m_FSReelStops;
         //protected List<int> m_BaseReelStops;
 
@@ -68,7 +70,7 @@ namespace GameEngine
 
         public SlotEngine()
         {
-            m_BaseThread = new Thread(PlayThread);
+            //m_BaseThread = new Thread(PlayThread);
             m_ePlayType = (ePlayType)0;
             if (m_ePlayType == ePlayType.Bingo)
             {
@@ -79,7 +81,7 @@ namespace GameEngine
             m_BonusList = new List<Bonus>();
             //m_BaseReelStops = new List<int>();
             //m_FSReelStops = new List<List<int>>();
-            m_SlotFeatures = new List<SlotFeature>();
+            //m_SlotFeatures = new List<SlotFeature>();
             RNG.Random.CreateRandom();
             m_sMarketType = "general";
            // LoadXML(xmlFileName);
@@ -87,6 +89,7 @@ namespace GameEngine
             m_Stage = STAGE.STAGE_IDLE;
             m_RecoveryData = null;
             m_bRecover = false;
+            m_SlotReels = new Dictionary<int, SlotReel>();
         }
 
         public static void SetRecoveryData(string name, string sData)
@@ -179,7 +182,7 @@ namespace GameEngine
                 {
                     case "SLOT":
                         {
-                            XmlAttribute attribute = node.Attributes[0];
+                            /*XmlAttribute attribute = node.Attributes[0];
                             int id = Convert.ToInt32(attribute.Value);
                             if (node.Attributes["freespin"] != null && Convert.ToBoolean(node.Attributes["freespin"].Value) == false)
                             {
@@ -192,19 +195,24 @@ namespace GameEngine
                                 m_FreespinSlot = new SlotReel(id, node, m_bWayPay);
                                 if (!m_FreespinSlot.LoadXML(node))
                                     return;
-                            }
+                            }*/
+                            int iSlotId = int.Parse(node.Attributes["id"].Value);
+                            SlotReel reel = new SlotReel(iSlotId, node, m_bWayPay);
+                            reel.LoadXML(node);
+                            m_SlotReels.Add(iSlotId, reel);
                             break;
                         }
                 }
             }
+            m_CurrentSlotReel = m_SlotReels[0];
         }
 
         public string getBaseDefaultReelStops()
         {
-            SpinResult result = m_BaseSlot.PlayGame();
+            SpinResult result = m_CurrentSlotReel.PlayGame();
             while (result.getWinAmount() != 0)
             {
-                result = m_BaseSlot.PlayGame();
+                result = m_CurrentSlotReel.PlayGame();
             }
             string sReels = "";
             int[] reels = result.getReelStops();
@@ -242,10 +250,11 @@ namespace GameEngine
 
         public List<int[]> getReelStrips(bool bFreeSpin = false)
         {
-            if (!bFreeSpin)
-                return m_BaseSlot.getReelStrips();
-            else
-                return m_FreespinSlot.getReelStrips();
+            /* if (!bFreeSpin)
+                 return m_BaseSlot.getReelStrips();
+             else
+                 return m_FreespinSlot.getReelStrips();*/
+            return m_CurrentSlotReel.getReelStrips();
         }
 
         /*void IGameEngine.PlayGame()
@@ -258,7 +267,7 @@ namespace GameEngine
         private Thread m_BaseThread;
         public void PlayGame(int betAmount, string sTicket)
         {
-            if (m_Stage == STAGE.STAGE_IDLE)
+            if (m_Stage == STAGE.STAGE_IDLE || m_Stage == STAGE.STAGE_FREESPIN)
             {
                 Log("GameEngine Error! IGameEngine::PlayGame() - Start to Play Game ");
                 m_iBetLevel = betAmount;
@@ -278,12 +287,12 @@ namespace GameEngine
 
 
             }
-            else if (m_Stage == STAGE.STAGE_FREESPIN)
+          /*  else if (m_Stage == STAGE.STAGE_FREESPIN)
             {
                 Thread play = new Thread(FreePlayThread);
                 play.Start(betAmount);
 
-            }
+            }*/
             else
             {
                 ThrowError("GAME ENGINE ERROR!");
@@ -291,7 +300,7 @@ namespace GameEngine
             }
         }
 
-        public virtual void ParseTicket(string sTicket)
+       /* public virtual void ParseTicket(string sTicket)
         {
             XmlDocument doc = new XmlDocument();
             doc.LoadXml(sTicket);
@@ -316,15 +325,16 @@ namespace GameEngine
                     m_FreespinSlot.InitFreeStopsTickets(childNode);
                 }
             }
-        }
+        }*/
 
         public virtual void PlayThread(object betAmount)
         {
             m_Stage = STAGE.STAGE_STARTGAME;
             m_TriggeredSlotFeatures.Clear();
             m_SpinResult.ResetFlags();
-            m_BaseSlot.ResetFlags();
-            if (m_ePlayType == ePlayType.PullTab || m_ePlayType == ePlayType.Bingo)
+            m_CurrentSlotReel.ResetFlags();
+            m_iBetLevel = (int)betAmount;
+           /* if (m_ePlayType == ePlayType.PullTab || m_ePlayType == ePlayType.Bingo)
             {
                 try
                 {
@@ -335,7 +345,7 @@ namespace GameEngine
                     ThrowError("GAME ENGINE ERROR! Parse Ticket ");
                     Log("GameEngine Error! SlotEngine::PlayThread() - Parse ticket error " + e.Message);
                 }
-            }
+            }*/
 
             if (m_ePlayType == ePlayType.Local)
             {
@@ -344,7 +354,7 @@ namespace GameEngine
                 {
                     try
                     {
-                        m_BaseSlot.SetForceSpin(m_sTicket);
+                        m_CurrentSlotReel.SetForceSpin(m_sTicket);
                     }
                     catch (Exception e)
                     {
@@ -357,7 +367,7 @@ namespace GameEngine
                 try
                 {
                     Log("GameEngine Error! IGameEngine::PlayThread() - Call PlayGame ");
-                    m_SpinResult = m_BaseSlot.PlayGame((int)betAmount);
+                    m_SpinResult = m_CurrentSlotReel.PlayGame((int)betAmount);
                 }
                 catch (Exception e)
                 {
@@ -409,7 +419,7 @@ namespace GameEngine
                 ThrowError("GameEngine ERROR! In feature");
                 Log("SlotEngine::PlayThread() - Error!! " + e.Message);
             }
-            try
+           /* try
             {
                 PlayBonusGame();
             }
@@ -418,15 +428,17 @@ namespace GameEngine
                 ThrowError("GameEngine ERROR! In Bonus");
                 Log("SlotEngine::PlayThread() - Error!! " + e.Message);
                 Log("Callstatck: " + e.StackTrace);
-            }
+            }*/
 
 
-#if _SIMULATOR
-#endif
             Log("GameEngine Error! IGameEngine::PlayThread() - Sending results ");
             GameResults(m_SpinResult);
-            GC.Collect();
+            //GC.Collect();
+#if _SIMULATOR
+            m_CurrentSlotReel.CollectStatistics();  //NEED TO RECHECK THIS
+#endif
 
+            if (m_BaseThread != null && m_BaseThread.IsAlive)
             m_BaseThread.Join();
         }
 
@@ -435,7 +447,7 @@ namespace GameEngine
         public virtual void PlayGameSimulator(int betAmount = 1)
         {
             m_iBetLevel = 1;
-            if (m_Stage == STAGE.STAGE_IDLE)
+            if (m_Stage == STAGE.STAGE_IDLE || m_Stage == STAGE.STAGE_IDLE)
             {
                 //m_FSReelStops.Clear();
                 m_SpinResult.ClearTiggerLine();
@@ -446,7 +458,7 @@ namespace GameEngine
                 {
                     try
                     {
-                        m_BaseSlot.SetForceSpin(m_sForceStop, true);
+                        m_CurrentSlotReel.SetForceSpin(m_sForceStop, true);
                     }
                     catch (Exception e)
                     {
@@ -460,7 +472,7 @@ namespace GameEngine
                 {
                     try
                     {
-                        m_FreespinSlot.SetForceSpin(m_sFSForceStop, true);
+                        m_CurrentSlotReel.SetForceSpin(m_sFSForceStop, true);
                     }
                     catch (Exception e)
                     {
@@ -469,26 +481,35 @@ namespace GameEngine
                     }
                 }
 
-                m_SpinResult = m_BaseSlot.PlayGame(betAmount);
+                m_SpinResult = m_CurrentSlotReel.PlayGame(betAmount);
                 int[] spinResults = m_SpinResult.getReelStops();
 
                 m_Stage = STAGE.STAGE_STARTGAME;
                 m_SpinResult.BaseWinAmount = m_SpinResult.getWinAmount();
                 // m_iBaseWinAmount = m_SpinResult.BaseWinAmount;
                 m_Stage = STAGE.STAGE_IDLE;
+                if(!m_SpinResult.FreePlay)
+                {
+                    m_Stage = STAGE.STAGE_IDLE;
+                    m_SpinResult.FreePlay = false;
+                }
+                else
+                {
+                    m_Stage = STAGE.STAGE_FREESPIN;
+                }
                 m_SpinResult.ReadyForSpin = true;
-                m_SpinResult.FreePlay = false;
+                
 
                 PlaySlotFeatures();
                 PlayBonusGame();
 
                 GameResults(m_SpinResult);
 #if _SIMULATOR
-                m_BaseSlot.CollectStatistics();  //NEED TO RECHECK THIS
+                m_CurrentSlotReel.CollectStatistics();  //NEED TO RECHECK THIS
 #endif
             }
 
-            else if (m_Stage == STAGE.STAGE_FREESPIN)
+     /*       else if (m_Stage == STAGE.STAGE_FREESPIN)
             {
                 m_SpinResult = m_FreespinSlot.PlayGame((int)betAmount, true);
                 List<int> reelStops = new List<int>();
@@ -500,7 +521,7 @@ namespace GameEngine
                 }
                 m_SpinResult.ReadyForSpin = true;
                 GameResults(m_SpinResult);
-            }
+            }*/
         }
 
         public virtual void PlaySlotFeatures()
@@ -513,7 +534,7 @@ namespace GameEngine
 
         }
 
-        public virtual void FreePlayThread(object betAmount)
+    /*    public virtual void FreePlayThread(object betAmount)
         {
             m_SpinResult.ResetSlotFeatures();
             if (m_ePlayType == ePlayType.PullTab || m_ePlayType == ePlayType.Bingo)
@@ -539,7 +560,6 @@ namespace GameEngine
 
             }
 
-            //m_SpinResult.BaseWinAmount = m_iBaseWinAmount;
             PlaySlotFeatures();
             PlayBonusGame();
             if (!m_SpinResult.FreePlay)
@@ -549,7 +569,7 @@ namespace GameEngine
             m_SpinResult.ReadyForSpin = true;
             GameResults(m_SpinResult);
             GC.Collect();
-        }
+        }*/
 
         public bool ReadyForSpin()
         {
@@ -596,13 +616,14 @@ namespace GameEngine
 
         public SlotFeature getSlotFeature(int iFeatureId)
         {
-            for (int i = 0; i < m_SlotFeatures.Count; i++)
+            /*for (int i = 0; i < m_SlotFeatures.Count; i++)
             {
                 if (m_SlotFeatures[i].getFeatureId() == iFeatureId)
                 {
                     return m_SlotFeatures[i];
                 }
-            }
+            }*/
+            m_CurrentSlotReel.getSlotFeature(iFeatureId);
             return null;
         }
 
@@ -657,23 +678,27 @@ namespace GameEngine
             if (dataList.ContainsKey("BGRS"))
             {
                 int[] reelstops = StringUtility.StringToIntArray(dataList["BGRS"], ' ');
-                m_BaseSlot.Recover(reelstops, iBetAmount);
-                m_SpinResult = m_BaseSlot.PlayGame(iBetAmount);
+                m_SlotReels[0].Recover(reelstops, iBetAmount);
+                m_SpinResult = m_SlotReels[0].PlayGame(iBetAmount);
                 //NEW
                 m_SpinResult.BaseWinAmount = m_SpinResult.getWinAmount();
             }
             m_iBetLevel = iBetAmount;
 
-            for (int i = 0; i < m_SlotFeatures.Count; i++)
+            /*for (int i = 0; i < m_SlotFeatures.Count; i++)
             {
                 m_SlotFeatures[i].setBetLevel(m_iBetLevel);
+            }*/
+            for(int i = 0; i < m_SlotReels.Count; i++)
+            {
+                m_SlotReels[i].SetSlotFeatureBetLevel(m_iBetLevel);
             }
 
             if (m_Stage == STAGE.STAGE_STARTGAME)
             {
                 m_bRecover = true;
                 int[] reelstops = StringUtility.StringToIntArray(dataList["BGRS"], ' ');
-                m_BaseSlot.Recover(reelstops, iBetAmount);
+                m_SlotReels[0].Recover(reelstops, iBetAmount);
                 m_Stage = STAGE.STAGE_IDLE;
             }
             if (m_Stage == STAGE.STAGE_FREESPIN)
@@ -700,7 +725,7 @@ namespace GameEngine
                     m_Stage = STAGE.STAGE_BONUS;
                     RecoverBonusSpin(dataList, iBetAmount);
                     int[] reelstops = StringUtility.StringToIntArray(dataList["BGRS"], ' ');
-                    m_BaseSlot.Recover(reelstops, iBetAmount);
+                    m_SlotReels[0].Recover(reelstops, iBetAmount);
                     m_Stage = STAGE.STAGE_IDLE;
                 }
             }
@@ -720,11 +745,13 @@ namespace GameEngine
         public virtual void RecoverFreeSpin(Dictionary<string, string> dataList, int iBetAmount = 0)
         {
             m_Stage = STAGE.STAGE_FREESPIN;
+            int id = int.Parse(dataList["SLOTID"]);
+            SlotReel FreespinReel = m_SlotReels[id];
             if (dataList.ContainsKey("FGRS") && !string.IsNullOrEmpty(dataList["FGRS"].Trim()))
             {
-                m_SpinResult = m_BaseSlot.PlayGame(iBetAmount);
+                m_SpinResult = m_SlotReels[0].PlayGame(iBetAmount);
                 int[] reelstops = StringUtility.StringToIntArray(dataList["FGRS"], ' ');
-                m_FreespinSlot.Recover(reelstops, iBetAmount);
+                FreespinReel.Recover(reelstops, iBetAmount);
 
                 int iCurrentSpin = int.Parse(dataList["CURRENTSPIN"]);
                 int iFSTotalWin = int.Parse(dataList["FSTOTALWIN"]);
@@ -734,14 +761,14 @@ namespace GameEngine
                 m_SpinResult.setBonusId(0, 0, 0);
                 m_SpinResult.FreePlay = true;
                 m_SpinResult.BaseWinAmount = int.Parse(dataList["BGWINAMOUNT"]);
-                m_FreespinSlot.RestoreFreeSpinProperties(iCurrentSpin, iTotalSpin, iFSTotalWin);
-                m_SpinResult.FreeSpinProp = m_FreespinSlot.getFreeSpinProperties();
+                FreespinReel.RestoreFreeSpinProperties(iCurrentSpin, iTotalSpin, iFSTotalWin);
+                m_SpinResult.FreeSpinProp = FreespinReel.getFreeSpinProperties();
             }
             else
             {
                 m_bRecover = true;
                 int[] reelstops = StringUtility.StringToIntArray(dataList["BGRS"], ' ');
-                m_BaseSlot.Recover(reelstops, iBetAmount);
+                m_SlotReels[0].Recover(reelstops, iBetAmount);
                 m_Stage = STAGE.STAGE_IDLE;
             }
 
@@ -789,12 +816,12 @@ namespace GameEngine
         {
             if (!bFreespin)
             {
-                List<Symbol> symbols = m_BaseSlot.getPayTable().GetAllSymbols();
+                List<Symbol> symbols = m_SlotReels[0].getPayTable().GetAllSymbols();
                 return symbols;
             }
             else
             {
-                List<Symbol> symbols = m_FreespinSlot.getPayTable().GetAllSymbols();
+                List<Symbol> symbols = m_SlotReels[1].getPayTable().GetAllSymbols();
                 return symbols;
             }
         }
@@ -803,12 +830,12 @@ namespace GameEngine
         {
             if (!bFreespin)
             {
-                List<int[]> lines = m_BaseSlot.getWinningLines();
+                List<int[]> lines = m_SlotReels[0].getWinningLines();
                 return lines;
             }
             else
             {
-                List<int[]> lines = m_FreespinSlot.getWinningLines();
+                List<int[]> lines = m_SlotReels[1].getWinningLines();
                 return lines;
             }
         }
@@ -817,20 +844,20 @@ namespace GameEngine
         {
             if (!bFreespin)
             {
-                return m_BaseSlot.getScatterList();
+                return m_SlotReels[0].getScatterList();
             }
             else
             {
-                return m_FreespinSlot.getScatterList();
+                return m_SlotReels[1].getScatterList();
             }
         }
 
         public List<SlotReel.TriggerSymbol> getTriggerList(bool bFreespin = false)
         {
             if (!bFreespin)
-                return m_BaseSlot.getTriggerList();
+                return m_SlotReels[0].getTriggerList();
             else
-                return m_FreespinSlot.getTriggerList();
+                return m_SlotReels[1].getTriggerList();
         }
 
         public void setThrowErrorAction(Action<string> errorAction)
@@ -848,18 +875,18 @@ namespace GameEngine
         public StringBuilder getStatisticsOutout(int iTotalBetAmount)
         {
             StringBuilder engineStringBuilder = new StringBuilder();
-            engineStringBuilder.AppendLine(m_BaseSlot.getStatisticsOutput(iTotalBetAmount).ToString());
+            engineStringBuilder.AppendLine(m_SlotReels[0].getStatisticsOutput(iTotalBetAmount).ToString());
             engineStringBuilder.AppendLine("________________________________________________________________");
-            if (m_FreespinSlot != null)
-                engineStringBuilder.AppendLine(m_FreespinSlot.getStatisticsOutput(iTotalBetAmount).ToString());
+            if (m_SlotReels[1] != null)
+                engineStringBuilder.AppendLine(m_SlotReels[1].getStatisticsOutput(iTotalBetAmount).ToString());
 
-            if (m_SlotFeatures != null)
+           /* if (m_SlotFeatures != null)
             {
                 for (int i = 0; i < m_SlotFeatures.Count; i++)
                 {
                     engineStringBuilder.AppendLine(m_SlotFeatures[i].getStatisticsOutput(iTotalBetAmount).ToString());
                 }
-            }
+            }*/
 
 
             for (int i = 0; i < m_BonusList.Count; i++)
@@ -873,9 +900,11 @@ namespace GameEngine
         public int getTotalWinAmountStatistics()
         {
             int iTotalWinAmount = 0;
-            iTotalWinAmount += m_BaseSlot.getTotalWinAmountStatistics();
-            if (m_FreespinSlot != null)
-                iTotalWinAmount += m_FreespinSlot.getTotalWinAmountStatistics();
+
+            
+            iTotalWinAmount += m_SlotReels[0].getTotalWinAmountStatistics();
+            if (m_SlotReels[1] != null)
+                iTotalWinAmount += m_SlotReels[1].getTotalWinAmountStatistics();
 
             for (int i = 0; i < m_BonusList.Count; i++)
             {

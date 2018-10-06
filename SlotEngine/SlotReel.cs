@@ -53,6 +53,8 @@ namespace GameEngine
         private List<TriggerSymbol> m_TriggerSymbols;
         private List<ScatterSymbol> m_ScatterSymbols;
 
+        protected List<SlotFeature> m_SlotFeatures;
+
         //private int[] m_iReelStops;
         private List<int> m_iReelStops;
         private List<int> m_iExtraWilds; //Extra wilds bool 1 and 0
@@ -95,6 +97,26 @@ namespace GameEngine
             m_iTotalWinAmount = 0;
             m_iPlaySpinCount = 0;
 #endif
+        }
+
+        public SlotFeature getSlotFeature(int iFeatureId)
+        {
+            for (int i = 0; i < m_SlotFeatures.Count; i++)
+            {
+                if (m_SlotFeatures[i].getFeatureId() == iFeatureId)
+                {
+                    return m_SlotFeatures[i];
+                }
+            }
+            return null;
+        }
+
+        public void SetSlotFeatureBetLevel(int iBetlevel)
+        {
+            for(int i = 0; i < m_SlotFeatures.Count; i++)
+            {
+                m_SlotFeatures[i].setBetLevel(iBetlevel);
+            }
         }
 
         public bool LoadXML(XmlNode node)
@@ -203,6 +225,7 @@ namespace GameEngine
                                 m_ScatterSymbols.Add(scatterSym);
                             }
                             break;
+
                 }
             }
 
@@ -722,6 +745,15 @@ namespace GameEngine
             m_SpinResult.setResult(iTotalWinAmount, wLines, m_iReelStops);
         }
 
+        public void AddSlotFeature(SlotFeature feature)
+        {
+            if(m_SlotFeatures == null)
+            {
+                m_SlotFeatures = new List<SlotFeature>();
+            }
+            m_SlotFeatures.Add(feature);
+        }
+
 #if _SIMULATOR
         public void CollectStatistics()
         {
@@ -891,6 +923,14 @@ namespace GameEngine
                     symbolWincount += " numOfSym:" + entry.Key + " wincount:" + entry.Value;
                 }
                 sBuilder.AppendLine("id: " + m_SymbolStats[i].iSymbolid + symbolWincount + " Total win amount: " + m_SymbolStats[i].iTotalWinAmount);
+            }
+
+            if (m_SlotFeatures != null)
+            {
+                for (int i = 0; i < m_SlotFeatures.Count; i++)
+                {
+                    sBuilder.AppendLine(m_SlotFeatures[i].getStatisticsOutput(iTotalBetAmount).ToString());
+                }
             }
 
             sBuilder.AppendLine(m_Paytable.getStatisticsOutput().ToString());
