@@ -14,7 +14,8 @@ namespace GameEngine
         SlotEngine m_Engine;
         protected bool m_bDone;
         protected bool m_bStarted;
-        public event EventHandler<EventArgs> BonusResult;
+        //public event EventHandler<EventArgs> BonusResult;
+        public Action<BonusResult> BonusResult;
         protected int m_iBetLevel;
         protected int m_iBetCredits;
         protected ePlayType m_ePlayType;
@@ -95,9 +96,9 @@ namespace GameEngine
 
         }
 
-        public void SendBonusResult(object result)
+        public void SendBonusResult(BonusResult bResult)
         {
-            BonusResult(result, null);
+            BonusResult(bResult);
         }
 
         public virtual void LoadXML(XmlNode node)

@@ -12,7 +12,7 @@ namespace GameEngine
         private Paytable m_PayTable;
 
         private List<int[]> m_SlotColumns;
-        private List<string> m_PayoutLines;
+        //private List<string> m_PayoutLines;
 
         private List<WinLine> m_WinLines;
         private List<int> m_WildList;
@@ -28,8 +28,8 @@ namespace GameEngine
             m_SearchSymbols = new List<int>();
             m_SearchSymbols.Clear();
 
-            m_PayoutLines = new List<string>();
-            m_PayoutLines.Clear();
+          //  m_PayoutLines = new List<string>();
+          //  m_PayoutLines.Clear();
 
             m_WinLines = new List<WinLine>();
             m_WinLines.Clear();
@@ -81,7 +81,7 @@ namespace GameEngine
 
             m_WinLines.Clear();
             m_SearchSymbols.Clear();
-            m_PayoutLines.Clear();
+            //m_PayoutLines.Clear();
 
             for(int i = 0; i < m_SlotColumns[0].Length; i++)
             {
@@ -145,7 +145,7 @@ namespace GameEngine
                     if(/*(node.col+1) >= m_PayTable.getMinCount(iSymbolID)*/m_PayTable.getWinAmount(iSymbolID, node.col+1) != 0)
                     {
                     m_WinLines.Add(new WinLine(payline, iSymbolID, node.col + 1, m_PayTable.getWinAmount(iSymbolID, node.col + 1), m_WinningLines[payline]));
-                    m_PayoutLines.Add(" Payline# " + payline + " last column: " + node.col + " row: " + node.Row + "\n");
+                  //  m_PayoutLines.Add(" Payline# " + payline + " last column: " + node.col + " row: " + node.Row + "\n");
                     }
                        
                     PaylineNode subChild = child.getLastChild();
@@ -158,7 +158,7 @@ namespace GameEngine
                             if(subPayLine != payline && m_PayTable.getWinAmount(iSymbolID, node.col+1)!= 0/*(node.col+1)>= m_PayTable.getMinCount(iSymbolID)*/)
                             {
                                 m_WinLines.Add(new WinLine(subPayLine, iSymbolID, node.col + 1, m_PayTable.getWinAmount(iSymbolID, node.col + 1), m_WinningLines[subPayLine]));
-                                m_PayoutLines.Add(" Payline# " + subPayLine + " last column: " + node.col + " row: " + node.Row + "\n");
+                          //      m_PayoutLines.Add(" Payline# " + subPayLine + " last column: " + node.col + " row: " + node.Row + "\n");
                             }
                                 
                         }
@@ -176,7 +176,7 @@ namespace GameEngine
                 {
                     int payline = node.PayLineNum;
                     m_WinLines.Add(new WinLine(payline, iSymbolID, node.col + 1, m_PayTable.getWinAmount(iSymbolID, node.col + 1), m_WinningLines[payline]));
-                    m_PayoutLines.Add(" Payline# " + payline + " last column: " + node.col + " row: " + node.Row + "\n");
+                  //  m_PayoutLines.Add(" Payline# " + payline + " last column: " + node.col + " row: " + node.Row + "\n");
                 }
             }
         }

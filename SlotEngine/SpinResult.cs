@@ -36,6 +36,7 @@ namespace GameEngine
             m_TriggerLines = new List<SlotReel.TriggerSymbol>();
             m_ScatterWins = new List<SlotReel.ScatterSymbol>();
             m_SlotFeatureResultList = new List<SlotFeatureResult>();
+            m_SlotFeatureResult = null;
             m_WayPayWins = new List<WayPayWin>();
             m_BonusId = new List<int>();
             m_SlotFeatureId = new List<int>();
